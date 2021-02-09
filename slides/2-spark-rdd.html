@@ -43,9 +43,10 @@
                     <script type="text/template">
                         ## Reminder: Homeworks
 
-                        - Expected by email before the following class
-                        - Submit the exported notebook (.ipynb extension)
-                        - File name should include both student name and no space (FirstName1LastName1_FirstName2LastName2.py) for instance
+                        - Send me the first one by Slack or email by Friday.
+                        - Next one expected before the following class (24/02)
+                        - Send the exported notebook (.ipynb extension)
+                        - Please include both student name and no space (TPName_FirstName_LastName.ipynb) in the file name.
 
                     </script>
                 </section>
@@ -56,8 +57,8 @@
                         - [Spark Documentation Website](http://spark.apache.org/docs/latest/)
                         - API docs: [Scala](http://spark.apache.org/docs/latest/api/scala/index.html), [Python](http://spark.apache.org/docs/latest/api/python/)
                         - Databricks learning notebooks
-                        - Book: [Learning Spark](http://shop.oreilly.com/product/0636920028512.do)
-                        - Online Book: [Mastering Spark 2](https://jaceklaskowski.gitbooks.io/mastering-apache-spark/content/)
+                        - Book: [Learning Spark 2nd Ed.](https://www.oreilly.com/library/view/learning-spark-2nd/9781492050032/)
+                        - Online Book: [Apache Spark Internals](https://books.japila.pl/apache-spark-internals/overview/)
                         - StackOverflow: [apache-spark](https://stackoverflow.com/tags/apache-spark) and [pyspark](https://stackoverflow.com/tags/pyspark)
                         - Practice!
                     </script>
@@ -67,7 +68,7 @@
                     <script type="text/template">
                         ## Philosophy
 
-                        Spark computing framework hides complexity of fault tolerance and slow machines.
+                        Spark computing framework hides complexity of fault tolerance and slow servers ("_stragglers_").
 
                         *"Here's an operation, run it on all the data."*
 
@@ -95,7 +96,7 @@
 
                         This course is based on Python API, as it is easier to learn than Scala and Java APIs for non-programmers.
 
-                        R API: *young*, outlying from the three others due to R syntax.
+                        R API: *younger*, outlying from the three others due to R syntax.
 
                         Note:
                         APIs allow users to interact with the software.
@@ -129,9 +130,9 @@
                 </section>
 
                 <section>
-                    <h2>SparkContext object</h2>
+                    <h2>RDD entry point: the SparkContext object</h2>
 
-                    <p>You interact with the driver through the <code>SparkContext</code> object. To create a <code>SparkContext</code> object: </p>
+                    <p>You interact with the driver through the <code>SparkContext</code> object, created as follows: </p>
 
                     <pre><code class="hljs py" data-trim>
 from pyspark import SparkConf, SparkContext
@@ -140,7 +141,7 @@ conf = SparkConf().setAppName(appName).setMaster(master)
 sc = SparkContext(conf = conf)
                     </code></pre>
 
-                    <p>When using the Virtual Machine notebooks or any Spark interactive shell, <code>SparkContext</code> is automatically created.</p>
+                    <p>When using notebooks or any Spark interactive shell, <code>SparkContext</code> is automatically created within the <code>SparkSession</code> (more details in next class).</p>
                 </section>
 
                 <section>
@@ -164,7 +165,7 @@ sc = SparkContext(conf = conf)
                         ### Creating a RDD
                         From an iterable object:
 
-                            lines = sc.parallelize(Iterator)
+                            lines = sc.parallelize(iterable_object)
 
                         From a text file:
 
@@ -272,7 +273,7 @@ sc = SparkContext(conf = conf)
                         Note:
                         - Unlike the mathematical union(), if there are duplicates in the input RDDs, the result of Spark’s union() will contain duplicates (which we can fix if desired with distinct()).
                         - intersection() also removes all duplicates (including duplicates from a single RDD)
-                        - While intersection() and union() are two sim‐ ilar concepts, the performance of intersection() is much worse since it requires a shuffle over the network to identify common elements.
+                        - While intersection() and union() are two similar concepts, the performance of intersection() is much worse since it requires a shuffle over the network to identify common elements.
                         - Subtact also requires a shuffle.
                         </script>
                     </section>
@@ -401,14 +402,14 @@ sc = SparkContext(conf = conf)
                         | -------------: | -------------------------------: |
                         | `foreach(f)` | Apply a function `f` to each element of a RDD |
 
-                        Perform an action on all of the elements in the RDD without returning any result to the driver.
+                        Performs an action on all of the elements in the RDD without returning any result to the driver.
 
-                        Example : insert records into a database with `f`
+                        Ex. : insert records into a database with using `f`
 
                         The `foreach()` action lets us perform computations on each element in the RDD without bringing it back locally.
                         
                         Note:
-                        - Try to make them understand that this actually a flapMap.
+                        - Try to make them understand that this actually a flatMap.
                         </script>
                     </section>
 
@@ -429,7 +430,7 @@ sc = SparkContext(conf = conf)
                         - Spark uses lazy evaluation to reduce the number of passes it has to take over our data by grouping operations together.
                         - In systems like Hadoop MapReduce, developers often have to spend a lot of time considering how to group together operations to minimize the number of MapReduce passes.
                         - In Spark, no substantial benefit to writing a single complex map instead of chaining together many simple operations.
-                        - Thus, users are free to organize their program into more smaller, primitive, more manageable operations. i.e. chaining.
+                        - Thus, users are free to organize their program into more smaller, primitive, more manageable operations, i.e. chaining.
                         </script>
                     </section>
                     <section data-markdown data-separator-notes="^Note:">
@@ -462,7 +463,7 @@ sc = SparkContext(conf = conf)
                         Note:
                         - Replication: if you cache data that is quite slow to be recomputed, you can use replications. Thus, if a machine fails, the data will not have to be recomputed.
                         - Serialization: Conversion of the data to a binary format. To my knowledge, PySpark only support serialized caching (as you cannot unserialized cache data that cannot be expressed in JVM data types).
-                        - Heap vs Stack
+                        - Heap vs Stack: off-heap helps to avoid JMV GC storms, but access is slower than stack and it can lead to serialization management issues.
                         </script>
                     </section>
                     <section data-markdown data-separator-notes="^Note:">
@@ -547,9 +548,9 @@ sc = SparkContext(conf = conf)
                             ...
 
                             def getMatchesNoReference(self, rdd):
-                            # Safe: extract only the field we need into a local variable
-                            query = self.query
-                            return rdd.filter(lambda x: query in x)
+                                # Safe: extract only the field we need into a local variable
+                                query = self.query
+                                return rdd.filter(lambda x: query in x)
                         </code></pre>
                         </script>
                     </section>
@@ -669,7 +670,6 @@ sc = SparkContext(conf = conf)
                         | `combineByKey( createCombiner, mergeValue, mergeCombiners, [partitioner])` | Generic function to combine the elements for each key using a custom set of aggregation functions. |
 
                         Turns an `RDD[(K, V)]` into a result of type `RDD[(K, C)]`, for a “combined type” `C` which can be different of `V`.
-
                         </script>
                     </section>
                     <section data-markdown data-separator-notes="^Note:">
@@ -704,10 +704,6 @@ sc = SparkContext(conf = conf)
                         | `rightOuterJoin(other)` | Right join with `other` RDD. |
                         | `leftOuterJoin(other)` | Left join with `other` RDD. |
 
-                        Note:
-                        - Right join: the key must be present in the first RDD
-                        - Left join: the key must be present in the `other` RDD
-
                         </script>
                     </section>
                     <section data-markdown data-separator-notes="^Note:">
@@ -741,10 +737,11 @@ sc = SparkContext(conf = conf)
                         | `collectAsMap()` | Return the key-value pairs in this RDD to the master as a Python dictionary. |
 
                         <pre><code class="hljs py" data-trim>
-                        >>> rdd = sc.parallelize([(1, 2), (3, 4), (3, 6)])
-                        >>> other = sc.parallelize([(3, 9)])
-                        >>> sorted(rdd.cogroup(other).collect())
-                        [(1,([2],[])), (3, ([4, 6],[9]))]
+                        >>> m = sc.parallelize([(1, 2), (3, 4)]).collectAsMap()
+                        >>> m[1]
+                        2
+                        >>> m[3]
+                        4
                         </code></pre>
 
                         </script>
@@ -793,6 +790,20 @@ sc = SparkContext(conf = conf)
                         The hash function you pass will be compared by identity to that of other RDDs.
 
                         If you want to partition multiple RDDs with the same partitioner, pass the same **function object** (e.g., a global function) instead of creating a new lambda for each one!
+                        </script>
+                    </section>
+                    <section data-markdown data-separator-notes="^Note:">
+                        <script type="text/template">
+                        **Warning**:
+
+                        The hash function you pass will be compared by identity to that of other RDDs.
+
+                        If you want to partition multiple RDDs with the same partitioner, pass the same **function object** (e.g., a global function) instead of creating a new lambda for each one!
+                        </script>
+                    </section>
+                    <section data-markdown data-separator-notes="^Note:">
+                        <script type="text/template">
+                            ### Second lab:<br>PySpark RDDs
                         </script>
                     </section>
                 </section>
