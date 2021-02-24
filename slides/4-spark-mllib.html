@@ -43,7 +43,8 @@
                     <script type="text/template">
                         ## Reminder: Homeworks
 
-                        - Expected by email before the following class
+                        - TP3 expected before 12/03
+                        - TP4 expected before 19/03
                         - Submit the exported notebook (.ipynb extension)
                         - File name should include both student name and no space (FirstName1LastName1_FirstName2LastName2.py) for instance
                     </script>
@@ -51,12 +52,12 @@
                 <section data-markdown data-separator-notes="^Note:">
                     <script type="text/template">
                         ## Overview
-                        - Spark MLlib is the name given to Spark's Machine Learning library
+                        - Spark ML is the name given to Spark's Machine Learning library
                         - Since Spark 1.6, there are two APIs for Spark ML:
-                            - RDD API: The older, original one
-                            - DataFrame API: The new, stable one
+                            - RDD API: The older, original one (MLlib)
+                            - DataFrame API: The new, stable one (Spark ML)
                         - Since Spark 2.0, it's recommended to use only the **DataFrame API**
-                        - But we will see an overview of the RDD API
+                        - A quick overview of the RDD API is still useful to understand legacy code
                     </script>
                 </section>
 
@@ -76,7 +77,7 @@
                             - Most models follow basically the same pattern:
                                - `import ModelName`
                                - `trained_model = ModelName.train(training_data, params)`
-                               - `model.predict()`
+                               - `model.predict(some_features)`
                         </script>
                     </section>
                 </section>
@@ -99,7 +100,7 @@
                         - Classification and Regression
                           - linear models, Bayes, decision trees, random forests, etc.
                         - Clustering
-                          - k-means, gaussian mixture, PIC, LDA, etc.
+                          - k-means, gaussian mixture, LDA, etc.
                         - Frequent Pattern Mining
                           - fp-growth, association rule mining, etc.
                     </script>
@@ -314,7 +315,6 @@
                         <script type="text/template">
                             ## RDD API: <br>Classification and Regression
                             - Most common ML algorithms
-                            - Some examples will be covered by this course
                             - Docs:
                                 - [Guide](https://spark.apache.org/docs/latest/mllib-classification-regression.html)
                                 - [Classification package](https://spark.apache.org/docs/latest/api/python/pyspark.mllib.html#module-pyspark.mllib.classification)
@@ -339,10 +339,9 @@
 
                     <section data-markdown >
                         <script type="text/template">
-                            ## Decision trees
-                            - Very popular
+                            ## Example: Decision trees
                             - Can be used for both classification and regression
-                            - In spark, 3 strategies for impority are accepted: "gini", "entropy" and "variance"
+                            - In spark, 3 strategies for impurity are accepted: "gini", "entropy" and "variance"
                             - Details of the algorithm can be found [here](https://spark.apache.org/docs/latest/mllib-decision-tree.html)
                         </script>
                     </section>
@@ -353,18 +352,17 @@
                             ```python
                             # split data
                             (trainingData, testData) = data.randomSplit([0.7, 0.3])
-
                             # train model
-                            model = DecisionTree.trainClassifier(trainingData, numClasses=2,
-                                categoricalFeaturesInfo={}, impurity='gini', maxDepth=5, maxBins=32
-                            )
-
+                            model = DecisionTree.trainClassifier(trainingData,
+                              numClasses=2, categoricalFeaturesInfo={}, impurity='gini',
+                              maxDepth=5, maxBins=32)
                             # predict
                             predictions = model.predict(testData.map(lambda x: x.features))
-
                             # compute error
-                            labelsAndPredictions = testData.map(lambda lp: lp.label).zip(predictions)
-                            testErr = labelsAndPredictions.filter(lambda lp: lp[0] != lp[1]).count() / float(testData.count())
+                            labelsAndPreds = testData.map(lambda lp: lp.label)\
+                                                     .zip(predictions)
+                            testErr = labelsAndPreds.filter(lambda lp: lp[0] != lp[1])\
+                                                    .count() / float(testData.count())
                             ```
                         </script>
                     </section>
@@ -382,10 +380,9 @@
                 <section data-markdown>
                   <script type="text/template">
                     ## DataFrame API - Intro
-                    - Instead of RDDs of vectors or matrices, it uses DataFrame
+                    - Instead of RDDs of vectors or matrices, it uses DataFrames
                     - DataFrames are much easier to manipulate, so this API is becoming the main one
-                    - However, it still doesn't contain all the functionality of the RDD API
-                    - Complete parity between both APIs is expected to be achieved in Spark 2.3
+                    - Complete parity between both APIs since Spark 2.3
                   </script>
                 </section>
 
@@ -394,10 +391,9 @@
                     <script type="text/template">
                       ## DataFrame API - Components
                       - The DataFrame API tries to simplify things by defining some few global components:
-                          - Transformer: an algorithm that transforms a DataFrame into another one.
-                          - Estimator: an algorithm that transforms a DataFrame into a Transformer
-                          - Pipeline: allows chaining multiple Transformers and Estimators
-                          - Parameter: a common strategy to define parameters
+                          - Transformer: transforms a DataFrame into another one.
+                          - Estimator: transforms a DataFrame into a Transformer
+                          - Pipeline: chains multiple Transformers and Estimators
                     </script>
                   </section>
                 </section>
@@ -444,10 +440,12 @@
                       training_data = ...
                       test_data = ...
 
-                      dt = DecisionTreeClassifier(labelCol="indexedLabel", featuresCol="indexedFeatures")
+                      dt = DecisionTreeClassifier(labelCol="indexedLabel", 
+                              featuresCol="indexedFeatures")
                       model = dt.fit(training_data)
 
-                      # 'model' is a Transformer, so 'predictions' will be a DataFrame
+                      # 'model' is a Transformer, so 'predictions' 
+                      # will be a DataFrame
                       predictions = model.transform(test_data)
                       ```
                     </script>
@@ -465,9 +463,11 @@
                       training_data = ...
                       test_data = ...
 
-                      dt = DecisionTreeClassifier(labelCol="indexedLabel", featuresCol="indexedFeatures")
+                      dt = DecisionTreeClassifier(labelCol="indexedLabel",
+                              featuresCol="indexedFeatures")
 
-                      # 'dt' is an Estimator, so the returned value will be a Transformer
+                      # 'dt' is an Estimator, so the returned value
+                      # will be a Transformer
                       model = dt.fit(training_data)
 
                       predictions = model.transform(test_data)
@@ -501,7 +501,8 @@
                       training_data = ...
                       test_data = ...
 
-                      dt = DecisionTreeClassifier(labelCol="indexedLabel", featuresCol="indexedFeatures", impurity="gini")
+                      dt = DecisionTreeClassifier(labelCol="indexedLabel",
+                              featuresCol="indexedFeatures", impurity="gini")
 
                       model = dt.fit(training_data)
 
@@ -519,7 +520,8 @@
                       training_data = ...
                       test_data = ...
 
-                      dt = DecisionTreeClassifier(labelCol="indexedLabel", featuresCol="indexedFeatures")
+                      dt = DecisionTreeClassifier(labelCol="indexedLabel",
+                              featuresCol="indexedFeatures")
 
                       # Using a setter:
                       dt.setImpurity('gini')
@@ -540,15 +542,13 @@
                       ```python
                       training_data = ...
                       test_data = ...
-
                       dt = DecisionTreeClassifier()
 
                       # Using a dictionary:
-
-                      params = dict {
+                      params = {
                         dt.labelCol: 'indexedLabel',
                         dt.featuresCol: 'indexedFeatures'
-                        dt.impurity: 'giti'
+                        dt.impurity: 'gini'
                       }
 
                       model = dt.fit(training_data, params)
@@ -566,7 +566,6 @@
                       ### DF API: Pipelines
                       - Allows chaining multiple transformers and estimators
                       - Very useful when we need to execute multiple data transformations before fitting a model
-                      ```
                     </script>
                   </section>
 
@@ -624,8 +623,11 @@
 
                       ```python
                       tokenizer = Tokenizer(inputCol="text", outputCol="words")
-                      hashingTF = HashingTF(inputCol=tokenizer.getOutputCol(), outputCol="features")
-                      lr = LogisticRegression(maxIter=10, regParam=0.001)
+                      hashingTF = HashingTF(inputCol=tokenizer.getOutputCol(),
+                                     outputCol="features")
+                      lr = LogisticRegression(featuresCol=hashingTF.getOutputCol(),
+                              labelCol='label', predictionCol='prediction',
+                              maxIter=10, regParam=0.001)
 
                       pipeline = Pipeline(stages=[tokenizer, hashingTF, lr])
                       model = pipeline.fit(training_data)
@@ -673,8 +675,7 @@
                       - Tokenizer (as we have already seen)
                       - StopWordsRemover
                       - Binarizer
-                      - StringIndexer
-                      - Bucketizer
+                      - Bucketizer, etc.
                     - The full list with explanation and examples can be found [here](https://spark.apache.org/docs/latest/ml-features.html)
                     </script>
                   </section>
@@ -701,7 +702,8 @@
                         (1, ["Mary", "had", "a", "little", "lamb"])
                       ], ["id", "raw"])
 
-                      remover = StopWordsRemover(inputCol="raw", outputCol="filtered")
+                      remover = StopWordsRemover(inputCol="raw",
+                                   outputCol="filtered")
                       remover.transform(sentence_data).show()
                       ```
                       ```md
@@ -771,7 +773,7 @@
                       ["id", "category"])
 
                       indexer = StringIndexer(inputCol="category",
-                        outputCol="categoryIndex")
+                                    outputCol="categoryIndex")
                       indexed = indexer.fit(df).transform(df)
                       indexed.show()
                       ```
